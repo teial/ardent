@@ -1,0 +1,12 @@
+[workspace]
+resolver = "3"
+members = [
+    "ardent-core",
+    "ardent-input",
+    "ardent-layout",
+    "ardent-macro",
+    "ardent-reactive",
+    "ardent-render",
+    "ardent-svg",
+    "ardent-text",
+]
