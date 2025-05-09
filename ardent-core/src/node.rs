@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use crate::event::EventHandler;
 use crate::shape::Shape;
 use crate::style::Style;
 use crate::transform::Transform;
@@ -68,9 +69,9 @@ impl Node {
             id: generate_id(),
             parent: None,
             children: Vec::new(),
-            transform: Transform,
+            transform: Transform::default(),
             shape: None,
-            style: Style,
+            style: Style::default(),
             on_event: None,
             dirty: false,
         }
