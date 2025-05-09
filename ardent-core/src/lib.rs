@@ -1,11 +1,16 @@
-mod node;
-mod scene;
-mod shape;
+pub mod node;
+pub mod scene;
+pub mod shape;
+pub mod style;
+pub mod transform;
 
-pub use node::{Node, NodeId};
-pub use scene::Scene;
-pub use shape::Shape;
+pub mod prelude {
+    pub use crate::node::Node;
+    pub use crate::scene::Scene;
+    pub use crate::shape::Shape;
+    pub use crate::style::*;
+    pub use crate::transform::Transform;
+}
 
 pub struct EventHandler;
 pub struct Transform;
-pub struct Style;

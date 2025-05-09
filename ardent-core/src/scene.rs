@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{Node, NodeId};
+use crate::node::{Node, NodeId};
 
 /// A scene graph managing a tree of UI nodes.
 ///

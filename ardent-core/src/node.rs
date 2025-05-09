@@ -1,6 +1,8 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::{EventHandler, Shape, Style, Transform};
+use crate::shape::Shape;
+use crate::style::Style;
+use crate::transform::Transform;
 
 /// A unique identifier for a node within the scene graph.
 ///
