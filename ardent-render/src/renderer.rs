@@ -1,27 +1,8 @@
 use ardent_core::prelude::{Scene, Shape};
-use lyon::path::Path;
-use lyon::tessellation::{BuffersBuilder, FillOptions, FillTessellator, FillVertex, VertexBuffers};
+use lyon::tessellation::{FillTessellator, VertexBuffers};
 
-/// A single 2D vertex to be sent to the GPU.
-///
-/// This is the lowest-level geometric primitive used in rendering.
-/// Each vertex contains a 2D position (x, y) in local node coordinates.
-/// Additional attributes like color or texture coordinates can be added later.
-#[derive(Debug)]
-pub struct Vertex {
-    /// Position in logical (device-independent) pixels.
-    pub position: [f32; 2],
-}
-
-impl Vertex {
-    /// Converts a `lyon` tessellated vertex into an `ardent` vertex.
-    pub fn from_fill_vertex(v: FillVertex) -> Self {
-        let pos = v.position();
-        Vertex {
-            position: [pos.x, pos.y],
-        }
-    }
-}
+use crate::geometry::Vertex;
+use crate::tesselate::Tesselate;
 
 /// The rendering engine that tessellates and prepares UI geometry for GPU rendering.
 ///
@@ -52,30 +33,13 @@ impl Renderer {
     /// Only `Shape::Rect` is currently supported.
     pub fn tessellate_scene(&mut self, scene: &Scene) -> Vec<Vertex> {
         let mut geometry: VertexBuffers<Vertex, u16> = VertexBuffers::new();
-
         scene.traverse(|node| {
             if let Some(shape) = node.shape() {
                 match shape {
-                    Shape::Rect { width, height } => {
-                        let mut path_builder = Path::builder();
-                        path_builder.begin(lyon::math::point(0.0, 0.0));
-                        path_builder.line_to(lyon::math::point(*width, 0.0));
-                        path_builder.line_to(lyon::math::point(*width, *height));
-                        path_builder.line_to(lyon::math::point(0.0, *height));
-                        path_builder.close();
-                        let path = path_builder.build();
-                        let _ = self.tessellator.tessellate_path(
-                            &path,
-                            &FillOptions::default(),
-                            &mut BuffersBuilder::new(&mut geometry, |v: FillVertex| {
-                                Vertex::from_fill_vertex(v)
-                            }),
-                        );
-                    }
+                    Shape::Rect(rect) => rect.tesselate(&mut geometry, &mut self.tessellator),
                 }
             }
         });
-
         geometry.vertices
     }
 }

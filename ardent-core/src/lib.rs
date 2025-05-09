@@ -9,7 +9,7 @@ pub mod prelude {
     pub use crate::event::*;
     pub use crate::node::Node;
     pub use crate::scene::Scene;
-    pub use crate::shape::Shape;
+    pub use crate::shape::*;
     pub use crate::style::*;
     pub use crate::transform::Transform;
 }

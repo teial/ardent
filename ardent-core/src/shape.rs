@@ -1,3 +1,7 @@
+mod rect;
+
+pub use rect::Rect;
+
 /// Represents a geometric shape that can be rendered on screen.
 ///
 /// A `Shape` defines the visible geometry of a node in the scene graph.
@@ -10,5 +14,5 @@ pub enum Shape {
     ///
     /// Rectangles are axis-aligned by default. Transformations such as
     /// rotation or scaling can be applied separately via the node's `Transform`.
-    Rect { width: f32, height: f32 },
+    Rect(rect::Rect),
 }
