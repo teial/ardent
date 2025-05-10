@@ -5,7 +5,8 @@ use lyon::tessellation::{FillVertex, VertexBuffers};
 /// This is the lowest-level geometric primitive used in rendering.
 /// Each vertex contains a 2D position (x, y) in local node coordinates.
 /// Additional attributes like color or texture coordinates can be added later.
-#[derive(Debug)]
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     /// Position in logical (device-independent) pixels.
     pub position: [f32; 2],
