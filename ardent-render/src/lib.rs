@@ -8,5 +8,6 @@
 //! At its core, `ardent_render` acts as the visual backend of the system.
 
 pub mod geometry;
+pub mod gpu;
 pub mod renderer;
 pub mod tesselate;
