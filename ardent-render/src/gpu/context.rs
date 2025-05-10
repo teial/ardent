@@ -5,6 +5,8 @@
 //! This module sets up the WGPU instance, device, queue, and swapchain surface.
 //! It forms the foundation for all GPU rendering in `ardent`.
 
+use std::sync::Arc;
+
 use wgpu::{
     Backends, Device, DeviceDescriptor, Instance, InstanceDescriptor, Queue, Surface,
     SurfaceConfiguration,
@@ -29,12 +31,12 @@ pub struct GpuContext<'a> {
     pub size: (u32, u32),
 }
 
-impl<'a> GpuContext<'a> {
+impl GpuContext<'_> {
     /// Creates a new GPU context bound to the given window.
     ///
     /// This initializes the GPU instance, chooses an adapter and device,
     /// creates a swapchain surface, and configures it for rendering.
-    pub async fn new(window: &'a Window) -> Self {
+    pub async fn new(window: Arc<Window>) -> Self {
         let size = window.inner_size();
 
         // 1. Create instace.
@@ -84,11 +86,11 @@ impl<'a> GpuContext<'a> {
     }
 
     /// Resizes the surface when the window size changes.
-    pub fn resize(&mut self, new_size: (u32, u32)) {
-        if new_size.0 > 0 && new_size.1 > 0 {
-            self.config.width = new_size.0;
-            self.config.height = new_size.1;
-            self.size = new_size;
+    pub fn resize(&mut self, width: u32, height: u32) {
+        if width > 0 && height > 0 {
+            self.config.width = width;
+            self.config.height = height;
+            self.size = (width, height);
             self.surface.configure(&self.device, &self.config);
         }
     }

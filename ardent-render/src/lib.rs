@@ -11,3 +11,6 @@ pub mod geometry;
 pub mod gpu;
 pub mod renderer;
 pub mod tesselate;
+
+pub use gpu::GpuContext;
+pub use renderer::Renderer;

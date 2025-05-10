@@ -61,7 +61,7 @@ impl Node {
     ///
     /// By default, the node has no shape or parent, no styling, and no
     /// event handler. It is initialized with an identity transform and an
-    /// empty list of children. The node is not marked as dirty initially.
+    /// empty list of children. The node is marked as dirty initially.
     ///
     /// This method is useful when building a new scene from scratch.
     pub fn new() -> Self {
@@ -73,7 +73,7 @@ impl Node {
             shape: None,
             style: Style::default(),
             on_event: None,
-            dirty: false,
+            dirty: true,
         }
     }
 

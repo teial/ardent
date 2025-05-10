@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "ardent-core",
+    "ardent-demo",
     "ardent-input",
     "ardent-layout",
     "ardent-macro",
@@ -10,3 +11,6 @@ members = [
     "ardent-svg",
     "ardent-text",
 ]
+
+[workspace.dependencies]
+winit = "0.30"

@@ -1,11 +1,10 @@
 [package]
-name = "ardent-render"
+name = "ardent-demo"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 ardent-core = { path = "../ardent-core" }
+ardent-render = { path = "../ardent-render" }
 winit.workspace = true
-lyon = "1.0"
-wgpu = "25.0"
-bytemuck = { version = "1.23", features = ["derive"] }
+pollster = "0.4"
