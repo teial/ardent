@@ -3,7 +3,7 @@ use crate::geometry::{Geometry, Vertex};
 use lyon::path::Path;
 use lyon::tessellation::{BuffersBuilder, FillOptions, FillTessellator, FillVertex};
 
-pub mod rect;
+mod rect;
 
 pub trait Tesselate {
     fn path(&self) -> Path;

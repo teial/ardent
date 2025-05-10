@@ -1,4 +1,4 @@
-use ardent_core::prelude::{Scene, Shape};
+use ardent_core::prelude::Shape;
 use lyon::tessellation::{FillTessellator, VertexBuffers};
 
 use crate::geometry::Vertex;
@@ -24,22 +24,16 @@ impl Renderer {
         }
     }
 
-    /// Traverses the scene graph and tessellates all visible shapes into vertex data.
+    /// Tessellates a single shape into vertices.
     ///
-    /// This method is CPU-side only. It does not upload anything to the GPU —
-    /// it simply converts all renderable shapes into a flat list of triangles
-    /// that can be sent to a GPU buffer.
-    ///
-    /// Only `Shape::Rect` is currently supported.
-    pub fn tessellate_scene(&mut self, scene: &Scene) -> Vec<Vertex> {
+    /// This uses the shape’s `Tesselate` implementation to generate
+    /// a vector path and convert it into triangles.
+    pub fn tessellate_shape(&mut self, shape: &Shape) -> Vec<Vertex> {
         let mut geometry: VertexBuffers<Vertex, u16> = VertexBuffers::new();
-        scene.traverse(|node| {
-            if let Some(shape) = node.shape() {
-                match shape {
-                    Shape::Rect(rect) => rect.tesselate(&mut geometry, &mut self.tessellator),
-                }
-            }
-        });
+        match shape {
+            Shape::Rect(rect) => rect.tesselate(&mut geometry, &mut self.tessellator),
+            // Add more shape variants here (e.g. Circle, Path, Text)
+        }
         geometry.vertices
     }
 }

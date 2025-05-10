@@ -2,40 +2,45 @@
 
 //! High-level renderer that ties together the scene graph, tessellation, and GPU drawing.
 
+use std::collections::HashMap;
+
+use ardent_core::node::NodeId;
 use ardent_core::scene::Scene;
 
 use super::GpuContext;
 use crate::gpu::buffers::VertexBuffer;
 use crate::gpu::pipeline::RenderPipelineBuilder;
 use crate::renderer::Renderer;
-use wgpu::{
-    CommandEncoderDescriptor, LoadOp, Operations, RenderPassColorAttachment, RenderPassDescriptor,
-    StoreOp, TextureViewDescriptor,
-};
 
-/// A reusable renderer that renders a scene into a WGPU surface frame.
+/// Stores a GPU vertex buffer representing a single node's geometry.
+struct CachedMesh {
+    vertex_buffer: VertexBuffer,
+}
+
+/// Top-level frame renderer with per-node GPU caching.
 ///
-/// This struct encapsulates the GPU drawing loop: it tessellates the scene,
-/// uploads geometry, and issues draw calls into a window.
+/// This struct handles full-scene rendering by:
+/// - Tracking cached geometry for each node
+/// - Tessellating and uploading GPU buffers only when dirty
+/// - Reusing GPU buffers otherwise
 pub struct FrameRenderer {
     renderer: Renderer,
     pipeline: wgpu::RenderPipeline,
+    cache: HashMap<NodeId, CachedMesh>,
 }
 
 impl FrameRenderer {
-    /// Initializes the rendering pipeline and internal tessellator.
+    /// Creates a new renderer with a fresh GPU pipeline and an empty cache.
     pub fn new(context: &GpuContext) -> Self {
         let renderer = Renderer::new();
         let pipeline = RenderPipelineBuilder::new(&context.device, &context.config).pipeline;
-        Self { renderer, pipeline }
+        Self {
+            renderer,
+            pipeline,
+            cache: HashMap::new(),
+        }
     }
 
-    /// Renders the current scene graph to the surface frame.
-    ///
-    /// - Traverses the scene graph to collect shapes.
-    /// - Tessellates them into triangles.
-    /// - Uploads them to a vertex buffer.
-    /// - Draws them using the GPU render pipeline.
     pub fn render(&mut self, scene: &Scene, context: &GpuContext) {
         let output = match context.surface.get_current_texture() {
             Ok(frame) => frame,
@@ -44,36 +49,25 @@ impl FrameRenderer {
                 return;
             }
         };
-
         let view = output
             .texture
-            .create_view(&TextureViewDescriptor::default());
+            .create_view(&wgpu::TextureViewDescriptor::default());
 
-        // Tessellate the scene to CPU-side geometry
-        let vertices = self.renderer.tessellate_scene(scene);
-        let vertex_buffer = VertexBuffer::from_vertices(&context.device, &vertices);
-
-        // Begin encoding commands
         let mut encoder = context
             .device
-            .create_command_encoder(&CommandEncoderDescriptor {
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Ardent Frame Encoder"),
             });
 
         {
-            let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Ardent Render Pass"),
-                color_attachments: &[Some(RenderPassColorAttachment {
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
-                    ops: Operations {
-                        load: LoadOp::Clear(wgpu::Color {
-                            r: 1.0,
-                            g: 1.0,
-                            b: 1.0,
-                            a: 1.0,
-                        }),
-                        store: StoreOp::Store,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                        store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -82,11 +76,39 @@ impl FrameRenderer {
             });
 
             pass.set_pipeline(&self.pipeline);
-            vertex_buffer.draw(&mut pass);
+            self.draw_scene(scene, context, &mut pass);
         }
 
-        // Submit and present
         context.queue.submit(Some(encoder.finish()));
         output.present();
+    }
+
+    fn draw_scene<'a>(
+        &'a mut self,
+        scene: &'a Scene,
+        context: &GpuContext,
+        pass: &mut wgpu::RenderPass<'a>,
+    ) {
+        let mut draw_list = Vec::new();
+
+        // 1. Traverse the scene, update cache if needed, collect IDs
+        scene.traverse(|node| {
+            if let Some(shape) = node.shape() {
+                let id = node.id();
+                if node.is_dirty() || !self.cache.contains_key(&id) {
+                    let vertices = self.renderer.tessellate_shape(shape);
+                    let vertex_buffer = VertexBuffer::from_vertices(&context.device, &vertices);
+                    self.cache.insert(id, CachedMesh { vertex_buffer });
+                }
+                draw_list.push(id);
+            }
+        });
+
+        // 2. Render using the cached vertex buffers
+        for id in draw_list {
+            if let Some(cached) = self.cache.get(&id) {
+                cached.vertex_buffer.draw(pass);
+            }
+        }
     }
 }
